@@ -10,6 +10,8 @@ test('Apple of Fortune utilise le solde global du projet', () => {
   assert.match(store, /import \{ useBetStore \} from ['"]@\/store\/useBetStore['"]/);
   assert.match(store, /const globalBalance = useBetStore\(\(state\) => state\.balance\)/);
   assert.match(store, /const updateGlobalBalance = useBetStore\(\(state\) => state\.updateBalance\)/);
+  assert.match(store, /balance: globalBalance/);
+  assert.doesNotMatch(store, /const \[balance,\s*setBalance\] = useState/);
   assert.match(store, /const addWager = useCallback\([\s\S]*?updateGlobalBalance\(balanceRef\.current\)/);
   assert.match(store, /const addPayout = useCallback\([\s\S]*?updateGlobalBalance\(balanceRef\.current\)/);
   assert.doesNotMatch(store, /AsyncStorage\.getItem\(STORAGE_KEYS\.balance\)/);

@@ -76,7 +76,6 @@ export default function GameScreen() {
   );
 
   const [round, setRound] = useState<Round | null>(null);
-  const [revealedAll, setRevealedAll] = useState<Map<string, CellState>>(new Map());
   const [sweepMap, setSweepMap] = useState<Map<string, CellState>>(new Map());
   const [roundEnded, setRoundEnded] = useState(false);
   const [showCashOutDock, setShowCashOutDock] = useState(false);
@@ -84,7 +83,7 @@ export default function GameScreen() {
   const [lastPayout, setLastPayout] = useState(0);
   const [resultLevel, setResultLevel] = useState(0);
   const [viewportWidth, setViewportWidth] = useState(0);
-  const boardShiftY = useRef(new Animated.Value(0)).current;
+  const [boardShiftY] = useState(() => new Animated.Value(0));
   const sweepTimers = useRef<number[]>([]);
   const [betInput, setBetInput] = useState(formatAof(game.currentBet));
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -160,7 +159,6 @@ export default function GameScreen() {
     setRound(null);
     roundRef.current = null;
     pendingBotAppleCommand.current = null;
-    setRevealedAll(new Map());
     setRoundEnded(false);
     setLastWon(false);
     setLastPayout(0);
@@ -429,7 +427,7 @@ export default function GameScreen() {
               accessibilityLabel="Retour aux jeux"
               style={({ pressed }) => [styles.headerIconWrap, pressed && { opacity: 0.6 }]}
             >
-              <Text style={styles.backArrow}>‹</Text>
+              <Text allowFontScaling={false} style={styles.backArrow}>‹</Text>
             </Pressable>
             <View style={styles.balancePill}>
               <Text style={styles.balanceText}>{formatReferenceBalance(game.balance)}</Text>
@@ -438,7 +436,7 @@ export default function GameScreen() {
                 disabled={!game.bonusAvailable}
                 style={({ pressed }) => [styles.plusButton, !game.bonusAvailable && { opacity: 0.45 }, pressed && { transform: [{ scale: 0.92 }], opacity: 0.9 }]}
               >
-                <Text style={styles.plusButtonText}>+</Text>
+                <Text allowFontScaling={false} style={styles.plusButtonText}>+</Text>
               </Pressable>
             </View>
             <View style={styles.headerIcons}>
@@ -454,7 +452,7 @@ export default function GameScreen() {
                 style={({ pressed }) => [styles.headerIconWrap, pressed && { opacity: 0.6 }]}
               >
                 <View style={styles.infoCircle}>
-                  <Text style={styles.infoCircleText}>i</Text>
+                  <Text allowFontScaling={false} style={styles.infoCircleText}>i</Text>
                 </View>
               </Pressable>
             </View>
@@ -606,7 +604,7 @@ export default function GameScreen() {
                   onPress={() => applyBet(BET_MIN)}
                   style={({ pressed }) => [styles.betChip, pressed && { transform: [{ scale: 0.95 }], opacity: 0.85 }]}
                 >
-                  <Text style={styles.betChipText}>MIN</Text>
+                  <Text allowFontScaling={false} style={styles.betChipText}>MIN</Text>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -614,7 +612,7 @@ export default function GameScreen() {
                   onPress={() => applyBet(Math.min(game.currentBet * 2, BET_MAX))}
                   style={({ pressed }) => [styles.betChip, pressed && { transform: [{ scale: 0.95 }], opacity: 0.85 }]}
                 >
-                  <Text style={styles.betChipText}>X2</Text>
+                  <Text allowFontScaling={false} style={styles.betChipText}>X2</Text>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -622,7 +620,7 @@ export default function GameScreen() {
                   onPress={() => applyBet(Math.max(BET_MIN, game.currentBet / 2))}
                   style={({ pressed }) => [styles.betChip, pressed && { transform: [{ scale: 0.95 }], opacity: 0.85 }]}
                 >
-                  <Text style={styles.betChipText}>X/2</Text>
+                  <Text allowFontScaling={false} style={styles.betChipText}>X/2</Text>
                 </Pressable>
                 <Pressable
                   accessibilityRole="button"
@@ -630,13 +628,15 @@ export default function GameScreen() {
                   onPress={() => applyBet(BET_MAX)}
                   style={({ pressed }) => [styles.betChip, pressed && { transform: [{ scale: 0.95 }], opacity: 0.85 }]}
                 >
-                  <Text style={styles.betChipText}>MAX</Text>
+                  <Text allowFontScaling={false} style={styles.betChipText}>MAX</Text>
                 </Pressable>
               </View>
               <View style={styles.betPanel}>
                 <View style={styles.betFieldWrap}>
                   <TextInput
                     style={styles.betInput}
+                    allowFontScaling={false}
+
                     value={betInput}
                     keyboardType="number-pad"
                     returnKeyType="done"
@@ -659,7 +659,7 @@ export default function GameScreen() {
                   disabled={!assetsLoaded || busy}
                   style={({ pressed }) => [styles.playButton, pressed && { transform: [{ scale: 0.97 }], opacity: 0.92 }, (!assetsLoaded || busy) && styles.playButtonDisabled]}
                 >
-                  <Text style={styles.playButtonText}>{!assetsLoaded ? "Chargement..." : "JOUER"}</Text>
+                  <Text allowFontScaling={false} style={styles.playButtonText}>{!assetsLoaded ? "Chargement..." : "JOUER"}</Text>
                 </Pressable>
               </View>
             </View>
@@ -673,7 +673,7 @@ export default function GameScreen() {
               style={({ pressed }) => [styles.bottomBarItem, pressed && { opacity: 0.7 }]}
             >
               <ReferenceGearIcon size={14} />
-              <Text style={styles.bottomBarText}>PARAMÈTRES</Text>
+              <Text allowFontScaling={false} style={styles.bottomBarText}>PARAMÈTRES</Text>
             </Pressable>
             <View style={styles.bottomBarSep} />
             <Pressable
@@ -681,7 +681,7 @@ export default function GameScreen() {
               style={({ pressed }) => [styles.bottomBarItem, pressed && { opacity: 0.7 }]}
             >
               <ReferenceBoltIcon size={14} />
-              <Text style={styles.bottomBarText}>PARI EN UN CLIC</Text>
+              <Text allowFontScaling={false} style={styles.bottomBarText}>PARI EN UN CLIC</Text>
             </Pressable>
           </View>
           )}
@@ -701,7 +701,7 @@ export default function GameScreen() {
               style={({ pressed }) => [styles.replayButton, styles.endActionButton, pressed && { transform: [{ scale: 0.97 }], opacity: 0.92 }]}
             >
               <View style={[styles.actionButtonSurface, styles.replaySurface]}>
-                <Text style={styles.replayButtonText}>REJOUER ? ({formatAof(game.currentBet)})</Text>
+                <Text allowFontScaling={false} style={styles.replayButtonText}>REJOUER ? ({formatAof(game.currentBet)})</Text>
               </View>
             </Pressable>
             <Pressable
@@ -720,7 +720,7 @@ export default function GameScreen() {
               ]}
             >
               <View style={[styles.actionButtonSurface, styles.newBetSurface]}>
-                <Text style={styles.newBetButtonText}>NOUVELLE MISE</Text>
+                <Text allowFontScaling={false} style={styles.newBetButtonText}>NOUVELLE MISE</Text>
               </View>
             </Pressable>
           </View>
@@ -730,7 +730,7 @@ export default function GameScreen() {
         {showCashOutDock && !roundEnded && (
           <View style={styles.cashOutDock}>
             <View style={styles.gainsPill}>
-              <Text style={styles.gainsPillText}>
+                <Text allowFontScaling={false} style={styles.gainsPillText}>
                 GAINS ACTUELS: {level > 0 ? formatAof(referencePayout(game.currentBet, multiplierAt(level))) : "0 F"}
               </Text>
             </View>
@@ -746,7 +746,7 @@ export default function GameScreen() {
               ]}
             >
               <View style={[styles.actionButtonSurface, styles.cashSurface, level === 0 && styles.cashSurfaceDisabled]}>
-                <Text style={[styles.cashButtonText, level === 0 && styles.cashButtonDisabledText]}>RÉCUPÉRER LES GAINS</Text>
+                <Text allowFontScaling={false} style={[styles.cashButtonText, level === 0 && styles.cashButtonDisabledText]}>RÉCUPÉRER LES GAINS</Text>
               </View>
             </Pressable>
           </View>

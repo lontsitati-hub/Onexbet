@@ -1,6 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLS, coresForRow, MULTIPLIERS, STORAGE_KEYS } from './game-logic';
-export { STORAGE_KEYS };
 import React, {
   createContext,
   useCallback,
@@ -11,6 +10,8 @@ import React, {
   useState,
 } from 'react';
 import { useBetStore } from '@/store/useBetStore';
+
+export { STORAGE_KEYS };
 
 export const INITIAL_BALANCE = 100_000;
 export const DAILY_BONUS = 10_000;
@@ -67,7 +68,6 @@ const GameContext = createContext<GameState | null>(null);
 export function GameProvider({ children }: { children: React.ReactNode }) {
   const globalBalance = useBetStore((state) => state.balance);
   const updateGlobalBalance = useBetStore((state) => state.updateBalance);
-  const [balance, setBalance] = useState<number>(globalBalance);
   const [history, setHistory] = useState<HistoryEntry[]>([]);
   const [totalWagered, setTotalWagered] = useState(0);
   const [totalWon, setTotalWon] = useState(0);
@@ -128,16 +128,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   // Le portefeuille Apple of Fortune suit toujours le solde global du projet.
   useEffect(() => {
     balanceRef.current = globalBalance;
-    setBalance(globalBalance);
   }, [globalBalance]);
-
-  const persist = useCallback(
-    async (updater: () => void) => {
-      updater();
-      // persistence handled by individual setters below
-    },
-    []
-  );
 
   const setBet = useCallback((bet: number) => setCurrentBet(bet), []);
 
@@ -157,7 +148,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       balanceRef.current = nextBalance;
       lastBonusDateRef.current = today;
       updateGlobalBalance(nextBalance);
-      setBalance(nextBalance);
       setBonusAvailable(false);
     } catch (error) {
       console.warn('AOF: impossible de sauvegarder le bonus quotidien', error);
@@ -173,7 +163,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     const current = balanceRef.current;
     balanceRef.current = current - amount;
     updateGlobalBalance(balanceRef.current);
-    setBalance(balanceRef.current);
     setTotalWagered(nextWagered);
   }, [totalWagered, updateGlobalBalance]);
 
@@ -181,7 +170,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     if (amount <= 0) return;
     balanceRef.current = balanceRef.current + amount;
     updateGlobalBalance(balanceRef.current);
-    setBalance(balanceRef.current);
     let nextWon = 0;
     setTotalWon((t) => {
       nextWon = t + amount;
@@ -210,7 +198,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   const resetBalance = useCallback(async () => {
     balanceRef.current = INITIAL_BALANCE;
     updateGlobalBalance(INITIAL_BALANCE);
-    setBalance(INITIAL_BALANCE);
     setTotalWagered(0);
     setTotalWon(0);
     setHistory([]);
@@ -302,7 +289,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   const value = useMemo<GameState>(
     () => ({
-      balance,
+      balance: globalBalance,
       history,
       totalWagered,
       totalWon,
@@ -332,7 +319,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       clearValidatedPredictions,
     }),
     [
-      balance,
+      globalBalance,
       history,
       totalWagered,
       totalWon,

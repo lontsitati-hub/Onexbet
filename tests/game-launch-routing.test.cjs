@@ -267,7 +267,7 @@ test('Apple Fortune allège le clic sans loader ajouté ni changement du débit'
   assert.doesNotMatch(startRound, /setTimeout|requestAnimationFrame|InteractionManager/);
   assert.doesNotMatch(game, /ActivityIndicator/);
   assert.match(game, /\{settingsOpen && <SettingsSheet visible onClose=\{\(\) => setSettingsOpen\(false\)\} \/>\}/);
-  assert.match(game, /<Text style=\{styles\.playButtonText\}>\{!assetsLoaded \? "Chargement\.\.\." : "JOUER"\}<\/Text>/);
+  assert.match(game, /<Text allowFontScaling=\{false\} style=\{styles\.playButtonText\}>\{!assetsLoaded \? "Chargement\.\.\." : "JOUER"\}<\/Text>/);
 });
 
 test('Apple Fortune masque les cotes avant JOUER puis les révèle pendant la manche', () => {

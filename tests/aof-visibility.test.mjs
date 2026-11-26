@@ -24,13 +24,16 @@ test('les codes multiplicateurs des rangées franchies gardent la visibilité de
   assert.doesNotMatch(styles, /multPillPast:\s*\{[^}]*\bopacity\s*:/);
 });
 
-test('le bouton de récupération AOF reprend la taille du bandeau de gains et conserve le bleu vidéo', () => {
+test('le bouton de récupération AOF reprend le style partagé du bandeau de gains et conserve le bleu vidéo', () => {
   const gainsPill = styles.match(/gainsPill:\s*\{([^}]*)\}/)?.[1];
   const cashButton = styles.match(/cashButton:\s*\{([^}]*)\}/)?.[1];
+  const sharedSize = styles.match(/const cashOutControlSize = \{([^}]*)\}/)?.[1];
   assert.ok(gainsPill && cashButton, 'les styles des deux éléments doivent exister');
-  for (const dimension of ["width: '100%'", 'maxWidth: 286', 'height: 38']) {
-    assert.ok(gainsPill.includes(dimension), `GAINS ACTUELS doit inclure ${dimension}`);
-    assert.ok(cashButton.includes(dimension), `RÉCUPÉRER LES GAINS doit inclure ${dimension}`);
+  assert.ok(sharedSize, 'la taille partagée du dock doit être définie');
+  assert.match(gainsPill, /\.\.cashOutControlSize/);
+  assert.match(cashButton, /\.\.cashOutControlSize/);
+  for (const dimension of ["width: '100%'", 'maxWidth: 450', 'height: 38']) {
+    assert.ok(sharedSize.includes(dimension), `la taille partagée doit inclure ${dimension}`);
   }
   assert.match(styles, /cashSurface:\s*\{[^}]*backgroundColor:\s*'#3D7FCB'/);
   assert.match(styles, /cashSurfaceDisabled:\s*\{[^}]*backgroundColor:\s*'#3D7FCB'/);

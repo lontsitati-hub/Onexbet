@@ -122,7 +122,7 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps) {
                   onPress={() => void game.clearPredictions()}
                   style={({ pressed }) => [styles.clearBtn, pressed && { opacity: 0.7 }]}
                 >
-                  <Text style={styles.clearBtnText}>Effacer</Text>
+                  <Text allowFontScaling={false} style={styles.clearBtnText}>Effacer</Text>
                 </Pressable>
               )}
               {hasValidated && (
@@ -130,7 +130,7 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps) {
                   onPress={() => void game.clearValidatedPredictions()}
                   style={({ pressed }) => [styles.clearBtn, pressed && { opacity: 0.7 }]}
                 >
-                  <Text style={styles.clearBtnText}>Retirer la validation</Text>
+                  <Text allowFontScaling={false} style={styles.clearBtnText}>Retirer la validation</Text>
                 </Pressable>
               )}
             </View>
@@ -163,7 +163,7 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps) {
                             pressed && { transform: [{ scale: 0.92 }] },
                           ]}
                         >
-                          <Text style={[styles.predictCellLabel, isOn && styles.predictCellLabelOn]}>
+                          <Text allowFontScaling={false} style={[styles.predictCellLabel, isOn && styles.predictCellLabelOn]}>
                             {ALPHAS[c]}
                           </Text>
                         </Pressable>
@@ -190,7 +190,7 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps) {
                 }}
                 style={({ pressed }) => [styles.validateBtn, pressed && { transform: [{ scale: 0.97 }], opacity: 0.92 }]}
               >
-                <Text style={styles.validateBtnText}>✔ Valider la prédiction</Text>
+                <Text allowFontScaling={false} style={styles.validateBtnText}>✔ Valider la prédiction</Text>
               </Pressable>
             )}
             <Pressable
@@ -202,7 +202,7 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps) {
               }}
               style={({ pressed }) => [styles.infoBtn, pressed && { opacity: 0.7 }]}
             >
-              <Text style={styles.infoBtnText}>ℹ Comment ça marche</Text>
+              <Text allowFontScaling={false} style={styles.infoBtnText}>ℹ Comment ça marche</Text>
             </Pressable>
           </View>
 
@@ -236,7 +236,7 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps) {
               }}
               style={({ pressed }) => [styles.resetBtn, pressed && { transform: [{ scale: 0.97 }], opacity: 0.92 }]}
             >
-              <Text style={styles.resetBtnText}>Réinitialiser le solde</Text>
+              <Text allowFontScaling={false} style={styles.resetBtnText}>Réinitialiser le solde</Text>
             </Pressable>
           </View>
 
@@ -287,7 +287,7 @@ export function SettingsSheet({ visible, onClose }: SettingsSheetProps) {
           onPress={onClose}
           style={({ pressed }) => [styles.closeBtn, pressed && { opacity: 0.8 }]}
         >
-          <Text style={styles.closeBtnText}>Fermer</Text>
+          <Text allowFontScaling={false} style={styles.closeBtnText}>Fermer</Text>
         </Pressable>
       </View>
     </Modal>
