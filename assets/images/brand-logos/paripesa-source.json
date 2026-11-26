@@ -1,0 +1,17 @@
+{
+  "brand": "paripesa",
+  "theme": "royal_blue",
+  "source": "D17D5516-590C-426B-971F-1863F79FBFF1.png",
+  "sourceSha256": "89723e7edbdd81500d93b16d255498838fad6c99c9fd6dd433a249587326464c",
+  "crop": [
+    174,
+    245,
+    1996,
+    479
+  ],
+  "variants": {
+    "light": "paripesa-light.png",
+    "dark": "paripesa-dark.png"
+  },
+  "note": "Logotype fourni par l’utilisateur. Aucun caractère redessiné. Même contour alpha ; contrastes adaptés au fond sans changer la marque."
+}

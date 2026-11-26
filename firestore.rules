@@ -1,0 +1,497 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // L'administrateur est déterminé par le profil Firestore serveur, jamais par
+    // les claims envoyés par le client.
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isAdmin() {
+      return signedIn()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function hasCompleteSubscription(d) {
+      return d.keys().hasAll(['subscriptionStartedAt', 'subscriptionDurationDays'])
+        && d.subscriptionStartedAt is timestamp
+        && d.subscriptionDurationDays is int
+        && d.subscriptionDurationDays >= 1
+        && d.subscriptionDurationDays <= 36500;
+    }
+
+    function isLegacyProfile(d) {
+      // Un profil legacy ne doit avoir ni l'un ni l'autre des deux champs.
+      return !d.keys().hasAny(['subscriptionStartedAt', 'subscriptionDurationDays']);
+    }
+
+    // Compatibilité avec les anciens profils créés avant le système
+    // d'abonnement. Ces valeurs sont uniquement acceptées pour évaluer
+    // l'accès en lecture ; les nouvelles écritures restent normalisées sur
+    // 'active' et 'suspended'.
+    function isActiveLegacyStatus(d) {
+      return d.status == 'active'
+        || d.status == 'actif'
+        || d.status == 'activated'
+        || d.status == 'approved'
+        || d.status == 'approuvé'
+        || d.status == 'validated'
+        || d.status == 'validé'
+        || d.status == 'accepted'
+        || d.status == 'accepté'
+        || d.status == true;
+    }
+
+    function isSuspendedLegacyStatus(d) {
+      return d.status == 'suspended'
+        || d.status == 'suspendu'
+        || d.status == 'blocked'
+        || d.status == 'bloqué'
+        || d.status == 'disabled'
+        || d.status == 'inactive'
+        || d.status == 'inactif'
+        || d.status == 'expired'
+        || d.status == false;
+    }
+
+    function isValidDisplayName(d) {
+      return !d.keys().hasAny(['displayName'])
+        || (d.displayName is string
+          && d.displayName.size() >= 1
+          && d.displayName.size() <= 64);
+    }
+
+    function isValidProfile(d) {
+      // Un champ d'abonnement isolé est donc invalide, tout comme une valeur mal typée.
+      return d.keys().hasAll(['role', 'status'])
+        && (d.role == 'user' || d.role == 'admin')
+        && (isActiveLegacyStatus(d) || isSuspendedLegacyStatus(d))
+        && isValidDisplayName(d)
+        && (isLegacyProfile(d) || hasCompleteSubscription(d));
+    }
+
+    function isNewUserProfile(d) {
+      return isValidProfile(d)
+        && d.role == 'user'
+        && hasCompleteSubscription(d)
+        && d.subscriptionStartedAt == request.time;
+    }
+
+    function isActiveAccount(uid) {
+      let profile = get(/databases/$(database)/documents/users/$(uid)).data;
+        return profile.role == 'admin'
+        || (isValidProfile(profile)
+          && isActiveLegacyStatus(profile)
+          && (isLegacyProfile(profile)
+            || request.time < profile.subscriptionStartedAt
+              + duration.value(profile.subscriptionDurationDays, 'd')));
+    }
+
+    function isExpiredAccount(uid) {
+      let profile = get(/databases/$(database)/documents/users/$(uid)).data;
+      return isValidProfile(profile)
+        && profile.role == 'user'
+        && profile.status == 'active'
+        && hasCompleteSubscription(profile)
+        && request.time >= profile.subscriptionStartedAt
+          + duration.value(profile.subscriptionDurationDays, 'd');
+    }
+
+    function subscriptionFieldsChanged() {
+      return request.resource.data.diff(resource.data).affectedKeys()
+        .hasAny(['subscriptionStartedAt', 'subscriptionDurationDays']);
+    }
+
+    function validAdminProfileUpdate() {
+      return isValidProfile(request.resource.data)
+        // A subscription change is a renewal/migration: it must begin now,
+        // use a valid duration, and reactivate the account.
+        && (!subscriptionFieldsChanged()
+          || (hasCompleteSubscription(request.resource.data)
+            && isActiveLegacyStatus(request.resource.data)
+            && request.resource.data.subscriptionStartedAt == request.time));
+    }
+
+    function ownsNewDevice(uid) {
+      return request.resource.data.keys().hasAll(['uid'])
+        && request.resource.data.uid == uid;
+    }
+
+    function ownsExistingDevice(uid) {
+      return resource.data.keys().hasAll(['uid'])
+        && resource.data.uid == uid;
+    }
+
+    function releaseDeviceUpdate(uid) {
+      return signedIn()
+        && request.auth.uid == uid
+        && isExpiredAccount(uid)
+        && ownsExistingDevice(uid)
+        && ownsNewDevice(uid)
+        && request.resource.data.keys().hasAll(['active'])
+        && request.resource.data.active == false
+        // Compatible with the mobile logout payload; ownership and identity
+        // fields cannot be changed during release.
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['active', 'signedOutAt', 'lastSeenAt']);
+    }
+
+    function validClockPayload() {
+      return request.resource.data.keys().hasOnly(['at'])
+        && request.resource.data.at is timestamp
+        && request.resource.data.at == request.time;
+    }
+
+    match /users/{uid} {
+      // A user may read only its own valid/legacy profile, including after
+      // subscription expiry. Admins may read individual profiles and list all.
+      allow get: if isAdmin()
+        || (signedIn() && request.auth.uid == uid && isValidProfile(resource.data));
+      allow list: if isAdmin();
+
+      // New non-admin profiles must carry a server-time start and valid duration.
+      // Admin profiles are exempt from the subscription requirement, but not from
+      // role/status or partial-field validation.
+      allow create: if isAdmin()
+        && isValidProfile(request.resource.data)
+        && (request.resource.data.role == 'admin'
+          || isNewUserProfile(request.resource.data));
+
+      // Only an existing admin can update/delete non-admin profiles.
+      // Changing either subscription field is always a current-time renewal.
+      allow update: if isAdmin()
+        && resource.data.role == 'user'
+        && validAdminProfileUpdate();
+      allow delete: if isAdmin()
+        && request.auth.uid != uid
+        && resource.data.role == 'user';
+    }
+
+    match /users/{uid}/accessClock/{clockId} {
+      allow read: if signedIn()
+        && (request.auth.uid == uid || isAdmin());
+
+      // The clock is a freshness proof, not an entitlement. It remains writable
+      // for the owner even when expired; every write must use this request's time.
+      allow create: if clockId == 'current'
+        && signedIn()
+        && (request.auth.uid == uid || isAdmin())
+        && validClockPayload();
+      allow update: if clockId == 'current'
+        && signedIn()
+        && (request.auth.uid == uid || isAdmin())
+        && validClockPayload()
+        && request.resource.data.at > resource.data.at;
+      allow delete: if false;
+    }
+
+    match /users/{uid}/security/{documentId} {
+      // The binding document has to carry the same owner as its path.
+      // A transaction must be able to read a missing document before creating it.
+      allow read: if signedIn()
+        && (isAdmin() || request.auth.uid == uid);
+      allow create: if signedIn()
+        && ownsNewDevice(uid)
+        && (isAdmin() || (request.auth.uid == uid && isActiveAccount(uid)));
+      allow update: if signedIn()
+        && ownsExistingDevice(uid)
+        && ownsNewDevice(uid)
+        && (isAdmin()
+          || (request.auth.uid == uid && isActiveAccount(uid))
+          || releaseDeviceUpdate(uid));
+      allow delete: if signedIn()
+        && ownsExistingDevice(uid)
+        && (isAdmin() || (request.auth.uid == uid && isActiveAccount(uid)));
+    }
+
+    match /users/{uid}/devices/{deviceId} {
+      allow read: if signedIn()
+        && (isAdmin() || request.auth.uid == uid);
+      allow create: if signedIn()
+        && ownsNewDevice(uid)
+        && (isAdmin() || (request.auth.uid == uid && isActiveAccount(uid)));
+      allow update: if signedIn()
+        && ownsExistingDevice(uid)
+        && ownsNewDevice(uid)
+        && (isAdmin()
+          || (request.auth.uid == uid && isActiveAccount(uid))
+          || releaseDeviceUpdate(uid));
+      allow delete: if signedIn()
+        && ownsExistingDevice(uid)
+        && (isAdmin() || (request.auth.uid == uid && isActiveAccount(uid)));
+    }
+
+    match /fastGamesGrants/{grantId} {
+      // Existing clients query the complete grants collection. Firestore does
+      // not filter query results by rules, so collection read is intentionally
+      // limited to active accounts or admins; writes stay admin-only.
+      allow read: if isAdmin() || (signedIn() && isActiveAccount(request.auth.uid));
+      allow write: if isAdmin();
+    }
+
+    function validCouponShareCode(code) {
+      return code is string && code.matches('^[A-Z0-9]{5}$');
+    }
+
+    function validCouponShareFields(d, code) {
+      return d.keys().hasAll(['ownerUid', 'code', 'payload', 'createdAt'])
+        && d.keys().hasOnly(['ownerUid', 'code', 'payload', 'createdAt', 'updatedAt'])
+        && d.ownerUid is string
+        && d.ownerUid == request.auth.uid
+        && d.code == code
+        && validCouponShareCode(d.code)
+        && d.payload is string
+        && d.payload.size() > 0
+        && d.payload.size() <= 850000;
+    }
+
+    function validCouponShareCreate(d, code) {
+      return validCouponShareFields(d, code)
+        && d.createdAt is timestamp
+        && d.createdAt == request.time
+        && (!d.keys().hasAny(['updatedAt'])
+          || (d.updatedAt is timestamp && d.updatedAt == request.time));
+    }
+
+    function validCouponShareUpdate(d, code) {
+      return validCouponShareFields(d, code)
+        && d.createdAt == resource.data.createdAt
+        && d.updatedAt is timestamp
+        && d.updatedAt == request.time;
+    }
+
+    match /coupon_shares/{code} {
+      // A known code can be loaded by any signed-in active account; listing the
+      // collection stays forbidden so codes and coupon details are not enumerable.
+      allow get: if signedIn()
+        && isActiveAccount(request.auth.uid)
+        && validCouponShareCode(code);
+      allow list: if false;
+      allow create: if signedIn()
+        && isActiveAccount(request.auth.uid)
+        && validCouponShareCreate(request.resource.data, code);
+      allow update: if signedIn()
+        && isActiveAccount(request.auth.uid)
+        && resource.data.ownerUid == request.auth.uid
+        && validCouponShareUpdate(request.resource.data, code);
+      allow delete: if signedIn()
+        && isActiveAccount(request.auth.uid)
+        && resource.data.ownerUid == request.auth.uid;
+    }
+
+    function validBotxAviatorCommand() {
+      return request.resource.data.keys().hasAll(['target', 'commandId', 'source', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['target', 'commandId', 'source', 'updatedAt'])
+        && request.resource.data.target is number
+        && request.resource.data.target >= 1
+        && request.resource.data.target <= 1000
+        && request.resource.data.commandId is string
+        && request.resource.data.commandId.size() >= 1
+        && request.resource.data.commandId.size() <= 128
+        && request.resource.data.source == 'botx-web'
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function validBotxCrashPointCommand() {
+      return request.resource.data.keys().hasAll(['target', 'commandId', 'source', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['target', 'commandId', 'source', 'updatedAt'])
+        && request.resource.data.target is number
+        && request.resource.data.target >= 1
+        && request.resource.data.target <= 1000
+        && request.resource.data.commandId is string
+        && request.resource.data.commandId.size() >= 1
+        && request.resource.data.commandId.size() <= 128
+        && request.resource.data.source == 'botx-web'
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.updatedAt == request.time;
+    }
+    function validBotxAppleCommand() {
+      return request.resource.data.keys().hasAll(['game', 'action', 'row', 'col', 'commandId', 'source', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['game', 'action', 'row', 'col', 'commandId', 'source', 'updatedAt', 'status'])
+        && request.resource.data.game == 'apple'
+        && request.resource.data.action == 'reveal'
+        && request.resource.data.row is int
+        && request.resource.data.row >= 0
+        && request.resource.data.row <= 9
+        && request.resource.data.col is int
+        && request.resource.data.col >= 0
+        && request.resource.data.col <= 4
+        && request.resource.data.commandId is string
+        && request.resource.data.commandId.size() >= 1
+        && request.resource.data.commandId.size() <= 128
+        && request.resource.data.source == 'botx-web'
+        && (!request.resource.data.keys().hasAny(['status']) || request.resource.data.status == 'pending')
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    function validAppleReset() {
+      return request.resource.data.keys().hasAll(['game', 'action', 'status', 'row', 'col', 'source', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['game', 'action', 'status', 'row', 'col', 'source', 'updatedAt', 'commandId'])
+        && request.resource.data.game == 'apple' && request.resource.data.action == 'reset'
+        && request.resource.data.status in ['waiting', 'reset']
+        && request.resource.data.row is int && request.resource.data.row == 0
+        && request.resource.data.col is int && request.resource.data.col == 0
+        && request.resource.data.source in ['botx-web', 'onexbet-app']
+        && (!request.resource.data.keys().hasAny(['commandId']) || (request.resource.data.commandId is string && request.resource.data.commandId.size() >= 1 && request.resource.data.commandId.size() <= 128))
+        && request.resource.data.updatedAt is timestamp && request.resource.data.updatedAt == request.time;
+    }
+    function validAppleAppEvent() {
+      return request.resource.data.keys().hasAll(['game', 'action', 'row', 'col', 'commandId', 'source', 'updatedAt', 'status'])
+        && request.resource.data.keys().hasOnly(['game', 'action', 'row', 'col', 'commandId', 'source', 'updatedAt', 'status'])
+        && request.resource.data.game == 'apple'
+        && request.resource.data.action == 'reveal'
+        && request.resource.data.row is int && request.resource.data.row >= 0 && request.resource.data.row <= 9
+        && request.resource.data.col is int && request.resource.data.col >= 0 && request.resource.data.col <= 4
+        && request.resource.data.commandId is string && request.resource.data.commandId.size() >= 1 && request.resource.data.commandId.size() <= 128
+        && request.resource.data.source == 'onexbet-app'
+        && (request.resource.data.status == 'round-started' || request.resource.data.status == 'round-ended')
+        && request.resource.data.updatedAt is timestamp && request.resource.data.updatedAt == request.time;
+    }
+    function validAppleGameAck() {
+      return request.resource.data.keys().hasAll(['game', 'action', 'row', 'col', 'commandId', 'source', 'updatedAt', 'status'])
+        && request.resource.data.keys().hasOnly(['game', 'action', 'row', 'col', 'commandId', 'source', 'updatedAt', 'status'])
+        && request.resource.data.game == 'apple'
+        && request.resource.data.action == 'reveal'
+        && request.resource.data.row is int
+        && request.resource.data.row >= 0
+        && request.resource.data.row <= 9
+        && request.resource.data.col is int
+        && request.resource.data.col >= 0
+        && request.resource.data.col <= 4
+        && request.resource.data.commandId is string
+        && request.resource.data.commandId.size() >= 1
+        && request.resource.data.commandId.size() <= 128
+        && request.resource.data.source == 'botx-web'
+        && (request.resource.data.status == 'prepared'
+          || request.resource.data.status == 'unavailable'
+          || request.resource.data.status == 'revealed'
+          || request.resource.data.status == 'lost'
+          || request.resource.data.status == 'round-started')
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.updatedAt == request.time;
+    }
+
+    match /aviator_channels/{uid} {
+      allow get: if signedIn()
+        && request.auth.uid == uid
+        && isActiveAccount(uid);
+      allow list: if false;
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && isActiveAccount(uid)
+        && validBotxAviatorCommand();
+      allow delete: if false;
+    }
+
+    match /crash_point_channels/{uid} {
+      allow get: if signedIn()
+        && request.auth.uid == uid
+        && isActiveAccount(uid);
+      allow list: if false;
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && isActiveAccount(uid)
+        && validBotxCrashPointCommand();
+      allow delete: if false;
+    }
+    function validWwgPayload() {
+      return request.resource.data.keys().hasAll(['game', 'action', 'mode', 'row', 'col', 'commandId', 'source', 'updatedAt', 'status'])
+        && request.resource.data.keys().hasOnly(['game', 'action', 'mode', 'row', 'col', 'commandId', 'source', 'updatedAt', 'status'])
+        && request.resource.data.game == 'wild-west-gold' && request.resource.data.action == 'reveal'
+        && request.resource.data.mode is int && (request.resource.data.mode == 2 || request.resource.data.mode == 3)
+        && request.resource.data.row is int && request.resource.data.row >= 0 && request.resource.data.row <= 5
+        && request.resource.data.col is int && request.resource.data.col >= 0 && request.resource.data.col < request.resource.data.mode
+        && request.resource.data.commandId is string && request.resource.data.commandId.size() >= 1 && request.resource.data.commandId.size() <= 128
+        && request.resource.data.source in ['botx-web', 'onexbet-app']
+        && request.resource.data.status in ['pending', 'prepared', 'revealed', 'lost', 'unavailable', 'round-started', 'round-ended']
+        && request.resource.data.updatedAt is timestamp && request.resource.data.updatedAt == request.time;
+    }
+    function validWwgBotCommand() { return validWwgPayload() && request.resource.data.source == 'botx-web' && request.resource.data.status == 'pending'; }
+    function validWwgInitialRound() {
+      return validWwgPayload() && request.resource.data.source == 'onexbet-app'
+        && request.resource.data.status == 'round-started'
+        && request.resource.data.row == 5 && request.resource.data.col == 0;
+    }
+    function validWwgReset() {
+      return request.resource.data.keys().hasAll(['game', 'action', 'status', 'mode', 'row', 'col', 'source', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['game', 'action', 'status', 'mode', 'row', 'col', 'source', 'updatedAt', 'commandId'])
+        && (!request.resource.data.keys().hasAny(['commandId'])
+          || (request.resource.data.commandId is string
+            && request.resource.data.commandId.size() >= 1
+            && request.resource.data.commandId.size() <= 128))
+        && request.resource.data.game == 'wild-west-gold'
+        && request.resource.data.action == 'reset'
+        && request.resource.data.status in ['waiting', 'reset']
+        && request.resource.data.mode is int && request.resource.data.mode in [2, 3]
+        && request.resource.data.row is int && request.resource.data.row == 0
+        && request.resource.data.col is int && request.resource.data.col == 0
+        && request.resource.data.source in ['botx-web', 'onexbet-app']
+        && request.resource.data.updatedAt is timestamp && request.resource.data.updatedAt == request.time;
+    }
+    function validWwgGameAck() {
+      return validWwgPayload() && request.resource.data.status in ['prepared', 'revealed', 'lost', 'unavailable', 'round-started', 'round-ended']
+        && request.resource.data.game == resource.data.game && request.resource.data.action == resource.data.action
+        && request.resource.data.commandId == resource.data.commandId && request.resource.data.source == resource.data.source;
+    }
+    match /wild_west_gold_channels/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid && isActiveAccount(uid);
+      allow list: if false;
+      allow create: if signedIn() && request.auth.uid == uid && isActiveAccount(uid)
+        && ((request.resource.data.action == 'reveal' && (validWwgBotCommand() || validWwgInitialRound()))
+          || (request.resource.data.action == 'reset' && validWwgReset()));
+      allow update: if signedIn() && request.auth.uid == uid && isActiveAccount(uid)
+        && ((request.resource.data.action == 'reveal' && (validWwgBotCommand() || validWwgGameAck() || validWwgInitialRound()))
+          || (request.resource.data.action == 'reset' && validWwgReset()));
+      allow delete: if false;
+    }
+
+    match /apple_channels/{uid} {
+      allow get: if signedIn()
+        && request.auth.uid == uid
+        && isActiveAccount(uid);
+      allow list: if false;
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && isActiveAccount(uid)
+        && (validBotxAppleCommand() || validAppleAppEvent() || validAppleReset());
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && isActiveAccount(uid)
+        && (validBotxAppleCommand() || validAppleGameAck() || validAppleAppEvent() || validAppleReset());
+      allow delete: if false;
+    }
+
+    // No other collection or subcollection is authorized by this ruleset.
+
+    // BotX web → canal privé du jeu Crash.
+    function validBotxCrashCommand() {
+      return request.resource.data.keys().hasAll(['target', 'commandId', 'source', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['target', 'commandId', 'source', 'updatedAt'])
+        && request.resource.data.target is number
+        && request.resource.data.target >= 1
+        && request.resource.data.target <= 1000
+        && request.resource.data.commandId is string
+        && request.resource.data.commandId.size() >= 1
+        && request.resource.data.commandId.size() <= 128
+        && request.resource.data.source == 'botx-web'
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.updatedAt == request.time;
+    }
+    match /crash_channels/{uid} {
+      allow get: if signedIn() && request.auth.uid == uid && isActiveAccount(uid);
+      allow list: if false;
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && isActiveAccount(uid)
+        && validBotxCrashCommand();
+      allow delete: if false;
+    }
+
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

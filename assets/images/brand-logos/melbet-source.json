@@ -1,0 +1,17 @@
+{
+  "brand": "melbet",
+  "theme": "gold",
+  "source": "EC2960E0-1EA5-446F-8DD6-B6658A073E7D.png",
+  "sourceSha256": "725280defa36b646d9960cc78cb04b44188d817936b4e5c5e686eadbece894cf",
+  "crop": [
+    94,
+    217,
+    2099,
+    564
+  ],
+  "variants": {
+    "light": "melbet-light.png",
+    "dark": "melbet-dark.png"
+  },
+  "note": "Logotype fourni par l’utilisateur. Aucun caractère redessiné. Même contour alpha ; contrastes adaptés au fond sans changer la marque."
+}

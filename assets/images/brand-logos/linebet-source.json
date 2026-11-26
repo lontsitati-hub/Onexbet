@@ -1,0 +1,17 @@
+{
+  "brand": "linebet",
+  "theme": "green",
+  "source": "B1CE4A66-A3C1-4D8E-AE67-FC0C36BB4BDF.png",
+  "sourceSha256": "a15923c18876ef269a8619b052e59882e93d0447f6081e806172c73f0371baae",
+  "crop": [
+    57,
+    148,
+    1876,
+    685
+  ],
+  "variants": {
+    "light": "linebet-light.png",
+    "dark": "linebet-dark.png"
+  },
+  "note": "Logotype fourni par l’utilisateur. Aucun caractère redessiné. Même contour alpha ; contrastes adaptés au fond sans changer la marque."
+}

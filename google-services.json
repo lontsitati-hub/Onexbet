@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "288285378583",
+    "project_id": "onexbet-7eebd",
+    "storage_bucket": "onexbet-7eebd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:288285378583:android:f86528ea62e137b56a7452",
+        "android_client_info": {
+          "package_name": "com.rayan45.onexbetarn"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-vwnZqVoSwXrk1Kd10RLfx1e35pl4KAU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:288285378583:android:39736e227de007066a7452",
+        "android_client_info": {
+          "package_name": "onexbet.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB-vwnZqVoSwXrk1Kd10RLfx1e35pl4KAU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

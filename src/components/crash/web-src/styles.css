@@ -1,0 +1,142 @@
+:root{font-family:Roboto,Arial,sans-serif;color:#f5f6fa;background:#070e21;font-synthesis:none;text-rendering:optimizeLegibility;--navy:#080f23;--panel:#10172e;--panel2:#1b2347;--orange:#f0500b;--orange2:#f27417;--gold:#ffd34a;--white:#f7f7fa}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:#070e21}
+body{overflow-x:hidden;-webkit-font-smoothing:antialiased}
+button,input{font:inherit}
+button{color:inherit;cursor:pointer}
+.app-shell{width:100%;max-width:540px;margin:0 auto;min-height:100vh;background:#080f23;overflow:hidden}
+.topbar{height:40px;background:#fafafa;display:flex;align-items:center;justify-content:space-between;padding:0 22px;color:#46515b;position:relative;z-index:2}
+.icon-button{border:0;background:transparent;display:grid;place-items:center;padding:0;color:#73878c}
+.icon-button svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.back-button{width:20px;height:28px;margin-left:0}
+.settings-button{width:25px;height:29px;margin-right:0}
+.settings-button svg{width:24px;height:24px;stroke:#7e9196;stroke-width:1.65;stroke-dasharray:2.2 1.2}
+.wallet{position:absolute;left:50%;top:4px;transform:translateX(-50%);height:31px;display:flex;align-items:center;gap:4px;background:#d2d2d2;border-radius:15px;padding:4px 5px;color:white;box-shadow:inset 0 1px 2px #f3f4f7}
+.wallet #balance{font-size:11.5px;line-height:1;font-weight:500;letter-spacing:.1px;background:#a7a8ab;color:#f1f1f1;border-radius:10px;padding:6px 7px;white-space:nowrap;text-align:center}
+.wallet-plus{width:24px;height:23px;flex:none;display:grid;place-items:center;background:#b4d9b6;border-radius:7px}
+.wallet-plus svg{width:14px;height:14px;fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;pointer-events:none}
+.subnav{height:36px;display:grid;grid-template-columns:1fr 1.25fr;gap:6px;padding:10px 9px 0}
+.tab{height:25px;border-radius:6px;font-size:13px;line-height:1;text-transform:uppercase;font-weight:500}
+.rules-tab{border:1px solid #dc5c24;background:transparent;color:#e67936;text-transform:none;font-size:13px}
+.history-tab{border:0;background:linear-gradient(105deg,#f27713,#df263c);color:#fff}
+.history-tab.history-selected{filter:brightness(1.12)}
+.history-clock{font-size:16px;vertical-align:-1px;margin-right:3px}
+.game-scene{height:154px;position:relative;background-color:#080f23;background-image:radial-gradient(ellipse at 54% 45%,rgba(37,46,90,.25),transparent 58%),linear-gradient(180deg,#0a1027,#081024);overflow:hidden}
+.flight-chart{position:absolute;inset:0;width:100%;height:100%}
+.countdown-indicator-overlay{position:absolute;inset:0;width:100%;height:100%;overflow:hidden;pointer-events:none;z-index:2}
+.chart-grid path{stroke:rgba(133,145,189,.22);stroke-width:1;stroke-dasharray:1 4}
+.chart-grid path:last-child{stroke-dasharray:none;stroke:rgba(190,194,212,.12)}
+.chart-dots circle{fill:#82879e;opacity:.72}
+.multiplier{font-size:37px;font-weight:700;letter-spacing:-1.5px;fill:#f5f5f8}
+.countdown-text{font-size:36px;font-weight:700;fill:#f8f8fb}
+.countdown-text[hidden]{display:none}
+.countdown-accepted{position:absolute;z-index:1;left:14%;right:14%;top:39%;min-height:31px;display:flex;align-items:center;justify-content:center;padding:5px 8px;border:1px solid rgba(148,218,75,.22);border-radius:4px;background:rgba(6,12,29,.93);color:#a2f653;font-size:14px;font-weight:500;text-align:center;letter-spacing:.01em;text-shadow:0 0 7px rgba(160,244,81,.16)}
+.countdown-accepted[hidden]{display:none}
+.countdown-segment{opacity:.34;transition:opacity .18s ease}
+.countdown-active-bar{stroke:#f05b20;stroke-width:5.8;stroke-linecap:round;filter:drop-shadow(0 0 3px rgba(240,91,32,.55))}
+.crash-flare{opacity:0;transform-box:fill-box;transform-origin:center}
+.game-scene.is-crashed .crash-flare{opacity:1;animation:flare .7s ease-out infinite alternate}
+.game-scene.is-crashed #plane,.game-scene.is-countdown #plane{opacity:0}
+.game-scene.is-countdown #flight-trail{opacity:.08}
+.game-notice{position:absolute;left:5%;right:5%;top:16px;text-align:center;min-height:21px;line-height:21px;font-size:12px;color:#80ef74;text-shadow:0 1px 3px #071018}
+.game-notice.success{color:#7bec69}.game-notice.danger{color:#fff;background:rgba(190,38,49,.84);border-radius:3px;padding:2px 4px}
+@keyframes flare{from{transform:scale(.8);filter:brightness(.9)}to{transform:scale(1.3);filter:brightness(1.3)}}
+.bets-area{padding:11px 4px 0;background:#080f23}
+.bet-cards{display:flex;flex-direction:column;gap:14px}
+.bet-card{position:relative;display:grid;grid-template-columns:minmax(0,1.56fr) minmax(108px,.87fr) 24px;grid-template-rows:34px 62px;gap:6px 7px;padding:9px 7px 9px 12px;min-height:120px;background:#10172d;border-radius:6px;box-shadow:0 2px 7px rgba(0,0,0,.22)}
+.bet-input-wrap{grid-column:1;grid-row:1;position:relative}
+.bet-input{width:100%;height:34px;border:0;border-radius:4px;background:#fff;color:#151820;padding:0 34px 0 10px;font-size:15px;font-weight:500;outline:none}
+.clear-input{position:absolute;right:7px;top:4px;width:25px;height:26px;background:none;border:0;color:#171923;font-size:22px;line-height:20px;padding:0}
+.auto-toggle{grid-column:2;grid-row:1;border:1px solid #6a4b36;border-radius:5px;background:#171a2a;color:#e08442;font-size:12px;line-height:14px;font-weight:700;text-align:center;text-transform:uppercase;padding:2px 3px}
+.remove-bet{grid-column:3;grid-row:1;border:0;border-radius:5px;background:#242a46;color:#fff;font-size:21px;line-height:1;padding:0;height:25px}
+.quick-bets{grid-column:1;grid-row:2;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,1fr);gap:5px}
+.quick-bet{border:0;border-radius:4px;background:#252c53;color:#f1f2f8;font-size:14px;font-weight:500;padding:0 2px;box-shadow:0 1px 2px #0a0d18}
+.action-button{grid-column:2/4;grid-row:2;border:0;border-radius:5px;background:linear-gradient(110deg,#f36c12,#ef4c08);color:#fff;font-size:13px;font-weight:700;line-height:15px;text-align:center;padding:5px 7px;text-transform:uppercase}
+.action-button small{display:block;font-size:10px;font-weight:400;text-transform:none;line-height:13px}
+.action-button.queued{background:#bb5b1a;color:#f3d4ba}
+.action-button.cashout{background:linear-gradient(110deg,#f8d848,#f8b321);color:#342507}
+.action-button.cashed,.action-button.disabled{background:#55586b;color:#dfdfe4}
+.win-notice{position:absolute;right:7px;bottom:73px;padding:3px 7px;background:#f1c837;border-radius:3px;color:#27200c;font-size:10px;font-weight:700;z-index:1;white-space:nowrap}
+.add-bet{display:flex;align-items:center;justify-content:center;gap:5px;width:min(60%,234px);height:35px;margin:9px auto 0;border:0;border-radius:4px;background:#292e56;color:#f7f7fb;font-size:14px;font-weight:700;letter-spacing:.2px}
+.add-bet span{font-size:23px;font-weight:400;line-height:1}
+.add-bet[hidden]{display:none}
+.stats-bar{height:59px;margin:10px 4px 0;border-radius:5px;background:linear-gradient(100deg,#ef7918 0%,#eb4c19 55%,#c72d40 100%);display:grid;grid-template-columns:repeat(3,1fr);align-items:center;text-align:center;color:#fff;padding:2px 3px}
+.stat{display:flex;min-width:0;flex-direction:column;align-items:center;justify-content:center;gap:2px;line-height:14px}
+.stat>span{font-size:12px;font-weight:400;white-space:nowrap}
+.stat strong{font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;column-gap:2px;line-height:13px;max-width:100%}
+.stat small{flex-basis:100%;font-size:11px;font-weight:600;line-height:10px}
+.stat-icon{width:10px;height:10px;fill:#fff;opacity:.95;flex:none}
+.stat-icon:nth-of-type(2){fill:none;stroke:#fff;stroke-width:1}
+.demo-data-note{margin:4px 8px 0;color:#9ca2b8;font-size:9px;line-height:12px;text-align:center}
+.leaderboard{padding:0 7px 18px;background:#080f23}
+.table-head,.bet-row{display:grid;grid-template-columns:1.32fr .9fr 1.15fr .65fr;align-items:center;column-gap:4px}
+.table-head{height:27px;color:#818398;font-size:10px;font-weight:500;white-space:nowrap;border-bottom:1px solid rgba(101,108,143,.2)}
+.table-head span:first-child{overflow:hidden;text-overflow:ellipsis}
+.bet-row{height:24px;color:#e8e9f0;font-size:10px;font-weight:400;white-space:nowrap}
+.bet-row span{overflow:hidden;text-overflow:clip}
+.bet-row .positive{color:#77d768}
+.bet-row .amount{text-align:left}
+.bet-row .gain{text-align:right;padding-right:1px}
+.bet-row.player-live{color:#d8d9e4}
+.bet-row.player-cashed{color:#e8f6e5}
+.bet-row.player-cashed .gain{color:#77d768}
+.bet-row.player-lost{color:#777c91;opacity:.72}
+.modal-layer{position:fixed;z-index:20;inset:0;display:flex;align-items:center;justify-content:center;padding:16px 4px}
+.modal-layer[hidden],.modal[hidden]{display:none}
+.modal-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.79)}
+.modal{position:relative;z-index:1;width:min(100%,360px);border-radius:20px;background:linear-gradient(145deg,#1b2343 0%,#18213d 100%);box-shadow:0 18px 45px rgba(0,0,0,.46);color:#f7f7fb;transform:translateY(20px)}
+.modal-close{position:absolute;right:15px;top:8px;width:27px;height:29px;border:0;background:transparent;color:#fff;font-size:32px;font-weight:300;line-height:24px;padding:0}
+.modal h1{text-align:center;margin:27px 31px 20px;font-size:22px;line-height:1.15;font-weight:700;letter-spacing:.2px;white-space:nowrap}
+.rules-modal{width:min(calc(100vw - 54px),346px);padding:0 15px 24px;border-radius:19px;transform:translateY(22px)}
+.rules-modal h1{font-size:25px;margin-top:26px;margin-bottom:26px}
+.rules-list{margin:0;padding-left:19px;font-size:13.5px;line-height:1.14;font-weight:400}
+.rules-list li{padding-left:2px;margin:0 0 6px}
+.rules-list li:last-child{margin-bottom:0}
+.auto-modal{width:min(calc(100vw - 36px),360px);padding:0 23px 22px;border-radius:19px;transform:translate(-16px,23px)}
+.auto-modal h1{margin:22px 22px 17px;font-size:17px}
+#auto-form{display:block;transform:translateY(0)}
+.field-label{display:block;color:#b7bac8;font-size:13px;line-height:16px;margin:0 0 4px}
+.modal-input-wrap{height:33px;display:flex;align-items:center;background:#fff;border-radius:4px;margin-bottom:13px;padding-left:11px}
+#auto-form>.modal-input-wrap:nth-of-type(2){margin-bottom:14px}
+.modal-input-wrap input{min-width:0;flex:1;height:100%;border:0;outline:0;background:transparent;color:#17191f;font-size:14px;font-weight:500}
+.modal-input-wrap input::placeholder{color:#94969d;opacity:1;font-weight:400}
+.modal-input-wrap input::-webkit-outer-spin-button,.modal-input-wrap input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.modal-input-wrap input[type=number]{appearance:textfield;-moz-appearance:textfield}
+.modal-input-wrap button{width:35px;height:100%;border:0;background:transparent;color:#1b1c21;font-size:24px;line-height:1}
+.auto-options{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:16px}
+.option-group{border:0;margin:0;padding:0;min-width:0}
+.option-group legend{padding:0;margin:0 0 7px;font-size:13px;font-weight:700;line-height:16px;white-space:nowrap}
+.wins-group legend{color:#a8ef42}.losses-group legend{color:#f33343}
+.option-group label{display:grid;grid-template-columns:20px 1fr;align-items:start;gap:5px;min-height:28px;color:#f5f5f8;font-size:13px;line-height:13px;margin-bottom:1px}
+.option-group input{appearance:none;width:19px;height:19px;border:1.5px solid #8990a5;border-radius:50%;margin:0;position:relative;background:transparent}
+.option-group input::after{content:"";position:absolute;inset:4px;border-radius:50%;background:transparent}
+.wins-group input:checked{border-color:#8fe435}.wins-group input:checked::after{background:#8fe435}
+.losses-group input:checked{border-color:#e43848}.losses-group input:checked::after{background:#e43848}
+.auto-submit{width:100%;height:37px;margin-top:17px;border:0;border-radius:4px;background:linear-gradient(100deg,#f17514,#ef4d0b);color:#fff;font-size:13px;font-weight:700}
+.toast-message{position:fixed;z-index:30;left:50%;top:52px;transform:translateX(-50%);padding:7px 12px;border-radius:3px;background:#257b2f;color:#e8ffe5;font-size:12px;white-space:nowrap;box-shadow:0 2px 9px #0008}
+@media(max-width:360px){.topbar{padding:0 15px}.bet-card{grid-template-columns:minmax(0,1.3fr) minmax(102px,.9fr) 23px;padding-left:8px;column-gap:5px}.auto-toggle{font-size:10px}.quick-bet{font-size:12px}.action-button{font-size:11px;padding-left:3px;padding-right:3px}.rules-list{font-size:12.5px}.auto-modal{padding-left:17px;padding-right:17px}.option-group label{font-size:11.5px;grid-template-columns:18px 1fr;gap:3px}}
+@media(min-width:540px){.app-shell{box-shadow:0 0 30px #0008}.modal-layer{padding:18px}}
+
+/* Corrections de fidélité relevées par comparaison directe avec les frames vidéo. */
+.chart-grid path{stroke:rgba(169,178,208,.28);stroke-width:1;stroke-dasharray:2 5}
+.chart-grid path:last-child{stroke:rgba(194,200,218,.22);stroke-dasharray:none}
+.game-scene.is-countdown #multiplier{display:none}
+.game-scene.is-countdown #flight-trail{opacity:0}
+.game-notice{left:5%;right:5%;top:62px;min-height:30px;line-height:30px;font-size:13px;text-shadow:none}
+.game-notice.success{left:25%;right:25%;color:#9bf15f;background:rgba(8,12,28,.94);border:1px solid rgba(57,65,95,.55);border-radius:5px;padding:0 5px;white-space:nowrap}
+.game-notice.success-early{left:5%;right:5%;top:16px;min-height:21px;line-height:21px;color:#80ef74;background:transparent;border:0;border-radius:0;padding:0;text-shadow:0 1px 3px #071018}
+.game-notice.danger{left:5%;right:5%;top:62px;min-height:30px;line-height:30px;background:rgba(190,38,49,.9);border-radius:4px;padding:0 6px}
+.app-shell.reference-dim{filter:none}
+.bet-card.active-bet .bet-input{background:#bfc1c5;color:#171820}
+.bet-card.active-bet .quick-bet{filter:brightness(.73)}
+.bet-card.active-bet .remove-bet{filter:none}
+.remove-bet[hidden]{display:none}
+.action-button.queued{background:#78651f;color:#d7c996}
+.action-button.cashout{background:#ff9700;color:#fff}
+.rules-modal{transform:translateY(23px)}
+.auto-modal{padding-bottom:29px;transform:translate(-16px,22px)}
+/* Le crash utilise le sprite capturé dans la vidéo, sans effet dessiné différent. */
+.game-scene.is-crashed .crash-flare{animation:impact-burst .8s ease-in-out infinite alternate;filter:brightness(1.16) saturate(1.14) drop-shadow(0 0 5px rgba(219,133,66,.45))}
+@keyframes impact-burst{from{opacity:.86}to{opacity:1}}
+
+button:disabled{opacity:.55;cursor:default}

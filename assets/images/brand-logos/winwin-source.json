@@ -1,0 +1,17 @@
+{
+  "brand": "winwin",
+  "theme": "light_green",
+  "source": "42C5EEEA-AE25-42FD-B445-D4472B17D4AC.png",
+  "sourceSha256": "7ae87f3d74e9b1296d29811911b59d39f7e823a88ebdcc6be96df78c2f06f81a",
+  "crop": [
+    85,
+    294,
+    1729,
+    594
+  ],
+  "variants": {
+    "light": "winwin-light.png",
+    "dark": "winwin-dark.png"
+  },
+  "note": "Logotype fourni par l’utilisateur. Aucun caractère redessiné. Même contour alpha ; contrastes adaptés au fond sans changer la marque."
+}
